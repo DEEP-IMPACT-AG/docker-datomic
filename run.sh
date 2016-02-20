@@ -2,10 +2,10 @@
 
 docker login -u $DOCKER_HUB_USERNAME -e $DOCKER_HUB_EMAIL -p $DOCKER_HUB_PASSWORD
 
-DOCKER_IMAGE=deepimpact/rupert
-DOCKER_VERSION=$(./datomic-version)
-DOCKER_TAG=datomic-$DOCKER_VERSION
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DOCKER_IMAGE=deepimpact/rupert
+DOCKER_VERSION=$(${DIR}/datomic-version)
+DOCKER_TAG=datomic-${DOCKER_VERSION}
 
 if [ ! -d "config" ]; then
 	mkdir config
