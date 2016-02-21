@@ -1,30 +1,31 @@
 FROM pointslope/clojure:lein-2.5.3
 
 MAINTAINER Christian Romney "cromney@pointslope.com"
+MAINTAINER Stanislas Nanchen "stan@deepimpact.ch"
 
-ENV DATOMIC_VERSION 0.9.5344
+ENV DATOMIC_DATA /var/datomic/data
+ENV DATOMIC_CONFIG /var/datomic/config
+
+RUN mkdir -p $DATOMIC_DATA && mkdir -p $DATOMIC_CONFIG
+
+VOLUME $DATOMIC_DATA
+VOLUME $DATOMIC_CONFIG
+
+ENV DATOMIC_VERSION 0.9.5327
 ENV DATOMIC_HOME /opt/datomic-pro-$DATOMIC_VERSION
-ENV DATOMIC_DATA $DATOMIC_HOME/data
 
-# Datomic Pro Starter as easy as 1-2-3
-# 1. Create a .credentials file containing user:pass
-# for downloading from my.datomic.com
-ONBUILD ADD .credentials /tmp/.credentials
+EXPOSE 4334 8080
 
-# 2. Make sure to have a config/ folder in the same folder as your
-# Dockerfile containing the transactor property file you wish to use
-ONBUILD RUN curl -u $(cat /tmp/.credentials) -SL https://my.datomic.com/repo/com/datomic/datomic-pro/$DATOMIC_VERSION/datomic-pro-$DATOMIC_VERSION.zip -o /tmp/datomic.zip \
-  && unzip /tmp/datomic.zip -d /opt \
-  && rm -f /tmp/datomic.zip
+WORKDIR /opt
 
-ONBUILD ADD config $DATOMIC_HOME/config
+RUN wget http://dynamodb-local.s3-website-us-west-2.amazonaws.com/dynamodb_local_latest
+RUN mkdir dynamodb
+RUN tar -xvzf dynamodb_local_latest -C dynamodb && rm -f dynamodb_local_latest
+
+ADD datomic.zip /tmp/datomic.zip
+RUN unzip /tmp/datomic.zip -d /opt && rm -f /tmp/datomic.zip
+ADD datomic.sh ${DATOMIC_HOME}
 
 WORKDIR $DATOMIC_HOME
 
-ENTRYPOINT ["bin/transactor"]
-
-# 3. Provide a CMD argument with the relative path to the
-# transactor.properties file it will supplement the ENTRYPOINT
-VOLUME $DATOMIC_DATA
-
-EXPOSE 4334 4335 4336
+ENTRYPOINT ["./datomic.sh"]
